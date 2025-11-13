@@ -22,11 +22,14 @@ except ImportError as e:
 def main():
     """Função principal que inicia a aplicação."""
     print("A tentar conectar à base de dados...")
-    conn = database.criar_conexao()
-    if conn:
-        conn.close()
+    client, db = database.criar_conexao()
+    if db is not None:
         print("Conexão bem-sucedida. A iniciar aplicação...")
-        menu()
+        try:
+            menu()
+        finally:
+            if client:
+                client.close()
     else:
         print("\nERRO CRÍTICO: Não foi possível conectar à base de dados.")
         print("Verifique as suas credenciais no ficheiro .env e a sua ligação à Internet.")

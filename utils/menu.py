@@ -18,31 +18,7 @@ def exibir_tela_inicializacao():
     print("- Micael Ribeiro")
     
     print("\n" + "-"*43)
-    print("A verificar o estado da base de dados...")
-    time.sleep(1)
-    
-    conn = None
-    tabelas_para_contar = ['clientes', 'betoneiras', 'alugueis']
-    try:
-        conn = database.criar_conexao()
-        if not conn:
-            print(">> ERRO: Não foi possível continuar devido a uma falha na ligação.")
-            return
-
-        with conn.cursor() as cursor:
-            print("Contagem de registos nas tabelas:")
-            for tabela in tabelas_para_contar:
-                sql = f"SELECT COUNT(1) AS total_{tabela} FROM {tabela}"
-                cursor.execute(sql)
-                total_registos = cursor.fetchone()[0]
-                print(f"  - Tabela '{tabela}': {total_registos} registos.")
-    
-    except Exception as e:
-        print(f">> ERRO ao contar registos na base de dados: {e}")
-    finally:
-        if conn:
-            conn.close()
-            
+    print("✅ Conectado ao MongoDB com sucesso!")
     print("-" * 43)
     pausar_e_limpar()
 
@@ -85,7 +61,7 @@ def atualizar_dados_betoneira():
     print("\n-- Atualizando Dados da Betoneira --")
     pesquisa.listar_todas_betoneiras()
     try:
-        id_bet = int(input("\nDigite o ID da betoneira para atualizar os dados: "))
+        id_bet = input("\nDigite o ID da betoneira para atualizar os dados: ")
         print("\n(Deixe em branco para não alterar)")
         
         novo_modelo = inputs_tratados.modelo("Novo modelo: ")
@@ -105,7 +81,7 @@ def gerenciar_manutencao_betoneira():
     print("\n-- Gerenciar Manutenção da Betoneira --")
     pesquisa.listar_todas_betoneiras()
     try:
-        id_bet = int(input("\nDigite o ID da betoneira para gerenciar a manutenção: "))
+        id_bet = input("\nDigite o ID da betoneira para gerenciar a manutenção: ")
         
         opcao = input("Deseja [1] Colocar em manutenção ou [2] Retirar da manutenção? ")
 
@@ -128,7 +104,7 @@ def remover_betoneira():
     print("\n-- Removendo Betoneira --")
     pesquisa.listar_todas_betoneiras()
     try:
-        id_bet = int(input("\nDigite o ID da betoneira que deseja remover: "))
+        id_bet = input("\nDigite o ID da betoneira que deseja remover: ")
         
         confirmacao = input(f"Tem certeza que deseja remover a betoneira ID {id_bet}? (s/n): ").lower()
         if confirmacao == 's':
@@ -177,7 +153,7 @@ def atualizar_cliente():
     print("\n-- Atualizando Cliente --")
     pesquisa.listar_todos_clientes()
     try:
-        id_cli = int(input("\nDigite o ID do cliente que deseja atualizar: "))
+        id_cli = input("\nDigite o ID do cliente que deseja atualizar: ")
         print("\n(Deixe em branco para não alterar)")
         novo_nome = inputs_tratados.nome("Novo nome: ")
         novo_telefone = inputs_tratados.telefone("Novo telefone: ")
@@ -191,7 +167,7 @@ def remover_cliente():
     print("\n-- Removendo Cliente --")
     pesquisa.listar_todos_clientes()
     try:
-        id_cli = int(input("\nDigite o ID do cliente que deseja remover: "))
+        id_cli = input("\nDigite o ID do cliente que deseja remover: ")
         
         confirmacao = input(f"Tem certeza que deseja remover o cliente ID {id_cli}? (s/n): ").lower()
         if confirmacao == 's':
@@ -206,11 +182,11 @@ def registrar_novo_aluguel():
     print("\n-- Registrar Novo Aluguel --")
     pesquisa.listar_todos_clientes()
     try:
-        id_cli = int(input("\nDigite o ID do Cliente: "))
+        id_cli = input("\nDigite o ID do Cliente: ")
         
         print("\n-- Betoneiras Disponíveis --")
         pesquisa.listar_betoneiras_disponiveis()
-        id_bet = int(input("\nDigite o ID da Betoneira: "))
+        id_bet = input("\nDigite o ID da Betoneira: ")
         
         data_inicio = inputs_tratados.data("Data de Início do Aluguel (DD/MM/AAAA): ")
         data_prevista = inputs_tratados.data("Data Prevista de Devolução (DD/MM/AAAA): ")
@@ -225,7 +201,7 @@ def registrar_devolucao():
     print("\n-- Registrar Devolução --")
     pesquisa.listar_alugueis_ativos()
     try:
-        id_aluguel = int(input("\nDigite o ID do aluguel a ser finalizado: "))
+        id_aluguel = input("\nDigite o ID do aluguel a ser finalizado: ")
         data_devolucao = inputs_tratados.data("Data de Devolução Efetiva (DD/MM/AAAA): ")
 
         resultado = alugueis_controller.finalizar_aluguel(id_aluguel, data_devolucao)

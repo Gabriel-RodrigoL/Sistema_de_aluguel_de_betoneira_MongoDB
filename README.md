@@ -1,4 +1,5 @@
 
+
 <p align="center">
   <img src="./assets/banner.png" alt="Sistema de Aluguer de Betoneiras" height="500">
 </p>
@@ -18,11 +19,12 @@ O projeto consiste num **sistema em Python** para gerir o **aluguer de betoneira
 
 **SGBD:**
 
-<img src="https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql&logoColor=white" alt="PostgreSQL">
+<img src="https://img.shields.io/badge/MongoDB-Atlas-blue?logo=mongodb&logoColor=white" alt="MongoDB">
 
 **Bibliotecas Python:**
 
-* `psycopg2-binary` → Driver de ligação com PostgreSQL
+* `pymongo` → Driver de ligação com MongoDB
+* `dnspython` → Suporte para conexões mongodb+srv
 * `python-dotenv` → Gestão de variáveis de ambiente
 * `pandas` → Exibição de relatórios formatados
 
@@ -35,37 +37,29 @@ O projeto consiste num **sistema em Python** para gerir o **aluguer de betoneira
 ## 📂 Estrutura do Projeto
 
 ```
-
 Sistema_de_aluguel_de_betoneira/
 ├── .env                  # Ficheiro local com as credenciais
-|
-│
 ├── conexion/
-│   └── database.py       # Módulo de ligação com a base de dados
-│
+│   └── database.py       # Módulo de ligação com MongoDB
 ├── controller/
 │   ├── alugueis_controller.py
 │   ├── betoneira_controller.py
 │   └── cliente_controller.py
-│
 ├── diagrams/
-│   └── diagrama_final.mmd
-│
+│   └── diagrama.mmd
 ├── pesquisa/
 │   └── pesquisa.py       # Módulo para consultas e relatórios
-│
-├── sql/
-│   └── banco_dados.sql   # Script SQL para criação das tabelas
-│
+├── model/
+│   ├── Alugueis.py
+│   ├── Betoneiras.py
+│   └── Cliente.py
 ├── utils/
 │   ├── inputs_tratados.py
 │   └── menu.py
-│
 ├── Dockerfile            # Ficheiro para criar a imagem Docker
 ├── main.py               # Ponto de entrada da aplicação
 └── requirements.txt      # Lista de dependências Python
-
-````
+```
 
 ---
 
@@ -75,6 +69,7 @@ Sistema_de_aluguel_de_betoneira/
 
 * Python **3.9+**
 * Git
+* Credenciais do MongoDB Atlas
 * Docker *(opcional, para execução em container)*
 
 ---
@@ -86,7 +81,7 @@ Clone o repositório:
 ```bash
 git clone https://github.com/VVagner2077/Sistema_de_aluguel_de_betoneira.git
 cd Sistema_de_aluguel_de_betoneira
-````
+```
 
 Crie e ative um ambiente virtual:
 
@@ -104,16 +99,64 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
+Crie um ficheiro `.env` na raiz do projeto:
+
+```properties
+MONGODB_URI="mongodb+srv://<usuario>:<senha>@<cluster>.mongodb.net/<database>"
+DB_NAME="aluguel_db"
+```
+
 Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Rodar o codigo
+Rodar a aplicação:
+
 ```bash
 python main.py
 ```
+
+---
+
+## 🔌 Estrutura do MongoDB
+
+### Coleções
+
+#### `clientes`
+```json
+{
+  "_id": ObjectId,
+  "nome": "string",
+  "telefone": "string (único)",
+  "cpf": "string (único)"
+}
+```
+
+#### `betoneiras`
+```json
+{
+  "_id": ObjectId,
+  "modelo": "string",
+  "valor": "float (valor da diária)",
+  "status": "string (disponivel|alugada|manutencao)"
+}
+```
+
+#### `alugueis`
+```json
+{
+  "_id": ObjectId,
+  "id_cliente": "string (referência)",
+  "id_betoneira": "string (referência)",
+  "data_inicio": "string",
+  "data_prevista_termino": "string",
+  "data_termino_real": "string (opcional)",
+  "status": "string (ativo|finalizado)"
+}
+```
+
 ---
 
 ## 🐳 Execução com Docker
@@ -129,6 +172,17 @@ docker build -t aluguer-betoneiras .
 ```bash
 docker run -it --rm --env-file .env aluguer-betoneiras
 ```
+
+---
+
+## 📝 Migração (PostgreSQL → MongoDB)
+
+Este projeto foi **migrado de PostgreSQL para MongoDB**:
+
+- ✅ Conexão adaptada para usar PyMongo
+- ✅ Controllers refatorados para CRUD em documentos
+- ✅ Validações de unicidade usando queries MongoDB
+- ✅ IDs agora usam MongoDB `ObjectId`
 
 ---
 
