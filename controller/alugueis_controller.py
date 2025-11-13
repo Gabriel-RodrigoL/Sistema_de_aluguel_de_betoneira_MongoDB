@@ -1,84 +1,64 @@
-from conexion import database
+﻿from conexion import database
 import sys
+from bson.objectid import ObjectId
+
 
 def registrar_aluguel(id_cliente, id_betoneira, data_inicio, data_prevista_termino):
+    db = database.get_db()
+    if db is None:
+        return "Erro: Não foi possível conectar ao banco de dados."
 
-    conn = None
     try:
-        conn = database.criar_conexao()
-        if not conn:
-            return "Erro: Não foi possível conectar ao banco de dados."
+        bet_col = db.betoneiras
+        alug_col = db.alugueis
 
-        with conn.cursor() as cursor:
+        b = bet_col.find_one({"_id": ObjectId(id_betoneira)})
+        if not b:
+            return "Erro: Betoneira não encontrada."
+        if b.get("status") != 'disponivel':
+            return f"Erro: A betoneira não está disponível (status: {b.get('status')})."
 
-            cursor.execute("SELECT status FROM betoneiras WHERE id = %s FOR UPDATE", (id_betoneira,))
-            resultado = cursor.fetchone()
-            
-            if not resultado:
-                return "Erro: Betoneira não encontrada."
-            if resultado[0] != 'disponivel':
-                return f"Erro: A betoneira não está disponível (status: {resultado[0]})."
+        data_inicio_str = str(data_inicio) if not isinstance(data_inicio, str) else data_inicio
+        data_prevista_termino_str = str(data_prevista_termino) if not isinstance(data_prevista_termino, str) else data_prevista_termino
 
-            sql_aluguel = """
-            INSERT INTO alugueis (id_cliente, id_betoneira, data_inicio, data_prevista_termino, status)
-            VALUES (%s, %s, %s, %s, 'ativo')
-            """
-            cursor.execute(sql_aluguel, (id_cliente, id_betoneira, data_inicio, data_prevista_termino))
+        doc = {
+            "id_cliente": id_cliente,
+            "id_betoneira": id_betoneira,
+            "data_inicio": data_inicio_str,
+            "data_prevista_termino": data_prevista_termino_str,
+            "status": "ativo"
+        }
+        res = alug_col.insert_one(doc)
 
-            sql_betoneira = "UPDATE betoneiras SET status = 'alugada' WHERE id = %s"
-            cursor.execute(sql_betoneira, (id_betoneira,))
-        
+        bet_col.update_one({"_id": ObjectId(id_betoneira)}, {"$set": {"status": "alugada"}})
 
-        conn.commit()
-        return "Aluguer registado com sucesso!"
-
+        return f"Aluguel registado com sucesso! id: {str(res.inserted_id)}"
     except Exception as e:
-
-        if conn:
-            conn.rollback()
         print(f"Erro inesperado [registrar_aluguel]: {e}", file=sys.stderr)
-        return "Erro ao registar aluguer."
-    finally:
-        if conn:
-            conn.close()
+        return "Erro ao registar aluguel."
+
 
 def finalizar_aluguel(id_aluguel, data_termino_real):
-    conn = None
+    db = database.get_db()
+    if db is None:
+        return "Erro: Não foi possível conectar ao banco de dados."
+
     try:
-        conn = database.criar_conexao()
-        if not conn:
-            return "Erro: Não foi possível conectar ao banco de dados."
+        alug_col = db.alugueis
+        bet_col = db.betoneiras
 
-        with conn.cursor() as cursor:
+        alug = alug_col.find_one({"_id": ObjectId(id_aluguel)})
+        if not alug or alug.get("status") != 'ativo':
+            return f"Erro: Aluguel com ID {id_aluguel} não encontrado ou já finalizado."
 
-            sql_aluguel = """
-            UPDATE alugueis 
-            SET data_termino_real = %s, status = 'finalizado' 
-            WHERE id = %s AND status = 'ativo'
-            RETURNING id_betoneira
-            """
-            cursor.execute(sql_aluguel, (data_termino_real, id_aluguel))
-            
-            resultado = cursor.fetchone()
-            if not resultado:
-                return f"Erro: Aluguer com ID {id_aluguel} não encontrado ou já finalizado."
-            
-            id_betoneira = resultado[0] 
+        data_termino_real_str = str(data_termino_real) if not isinstance(data_termino_real, str) else data_termino_real
 
+        alug_col.update_one({"_id": ObjectId(id_aluguel)}, {"$set": {"data_termino_real": data_termino_real_str, "status": "finalizado"}})
 
-            sql_betoneira = "UPDATE betoneiras SET status = 'disponivel' WHERE id = %s"
-            cursor.execute(sql_betoneira, (id_betoneira,))
-            
+        id_betoneira = alug.get("id_betoneira")
+        bet_col.update_one({"_id": ObjectId(id_betoneira)}, {"$set": {"status": "disponivel"}})
 
-        conn.commit()
-        return f"Aluguer {id_aluguel} finalizado. Betoneira {id_betoneira} libertada."
-
+        return f"Aluguel {id_aluguel} finalizado. Betoneira {id_betoneira} libertada."
     except Exception as e:
-        if conn:
-            conn.rollback()
         print(f"Erro inesperado [finalizar_aluguel]: {e}", file=sys.stderr)
-        return "Erro ao finalizar aluguer."
-    finally:
-        if conn:
-            conn.close()
-
+        return "Erro ao finalizar aluguel."
