@@ -164,3 +164,4 @@ def historico_alugueis():
     finally:
         if conn:
             conn.close()
+
